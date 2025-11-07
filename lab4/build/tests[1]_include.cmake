@@ -1,5 +1,0 @@
-if(EXISTS "/Users/artems/Desktop/c++_labs/testing/lab4/build/tests[1]_tests.cmake")
-  include("/Users/artems/Desktop/c++_labs/testing/lab4/build/tests[1]_tests.cmake")
-else()
-  add_test(tests_NOT_BUILT tests_NOT_BUILT)
-endif()
