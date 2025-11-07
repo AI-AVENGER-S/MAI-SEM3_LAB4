@@ -1,81 +1,111 @@
 #pragma once
-#include "figure.h"
-#include <vector>
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <utility>
+#include "figure.h"
 
-template<Scalar T>
+
+using namespace std;
+
+template <Scalar T>
 class Array {
 private:
-    std::vector<std::shared_ptr<Figure<T>>> data_;
-public:
-    Array() = default;
-    explicit Array(size_t reserve_capacity) { data_.reserve(reserve_capacity); }
+    shared_ptr<Figure<T>>* figures_; 
+    size_t size_;
+    size_t capacity_;
 
-    // copy
-    Array(const Array& other) {
-        data_.reserve(other.data_.size());
-        for (const auto& sp : other.data_) {
-            if (sp) data_.push_back(std::shared_ptr<Figure<T>>(sp->clone().release()));
-            else data_.push_back(nullptr);
+    void resize(size_t new_capacity) {
+        auto* new_data = new shared_ptr<Figure<T>>[new_capacity];
+        for (size_t i = 0; i < size_; ++i)
+            new_data[i] = move(figures_[i]);
+        delete[] figures_;
+        figures_ = new_data;
+        capacity_ = new_capacity;
+    }
+
+public:
+    Array(size_t capacity = 2)
+        : figures_(new shared_ptr<Figure<T>>[capacity]),
+          size_(0),
+          capacity_(capacity) {}
+
+    ~Array() {
+        delete[] figures_;
+    }
+
+    Array(const Array& other)
+        : figures_(new shared_ptr<Figure<T>>[other.capacity_]),
+          size_(other.size_),
+          capacity_(other.capacity_) {
+        for (size_t i = 0; i < size_; ++i) {
+            if (other.figures_[i])
+                figures_[i] = shared_ptr<Figure<T>>(other.figures_[i]->clone().release());
+            else
+                figures_[i] = nullptr;
         }
     }
-    Array& operator=(const Array& other) {
-        if (this != &other) {
-            data_.clear();
-            data_.reserve(other.data_.size());
-            for (const auto& sp : other.data_) {
-                if (sp) data_.push_back(std::shared_ptr<Figure<T>>(sp->clone().release()));
-                else data_.push_back(nullptr);
-            }
-        }
+
+    Array(Array&& other) noexcept
+        : figures_(other.figures_),
+          size_(other.size_),
+          capacity_(other.capacity_) {
+        other.figures_ = nullptr;
+        other.size_ = 0;
+        other.capacity_ = 0;
+    }
+
+    Array& operator=(Array other) noexcept {
+        swap(figures_, other.figures_);
+        swap(size_, other.size_);
+        swap(capacity_, other.capacity_);
         return *this;
     }
 
-    // move
-    Array(Array&&) noexcept = default;
-    Array& operator=(Array&&) noexcept = default;
-
-    void addFigure(const std::shared_ptr<Figure<T>>& f) {
-        data_.push_back(f);
+    void addFigure(const shared_ptr<Figure<T>>& figure) {
+        if (size_ >= capacity_)
+            resize(capacity_ * 2);
+        figures_[size_++] = figure;
     }
 
     void removeFigure(size_t index) {
-        if (index >= data_.size()) return;
-        data_.erase(data_.begin() + static_cast<long>(index));
+        if (index >= size_) return;
+        for (size_t i = index; i < size_ - 1; ++i)
+            figures_[i] = move(figures_[i + 1]);
+        --size_;
     }
 
-    std::shared_ptr<Figure<T>> getFigure(size_t index) const {
-        if (index >= data_.size()) return nullptr;
-        return data_[index];
+    shared_ptr<Figure<T>> getFigure(size_t index) const {
+        if (index >= size_) return nullptr;
+        return figures_[index];
     }
 
-    size_t getSize() const { return data_.size(); }
-    size_t getCapacity() const { return data_.capacity(); }
+    size_t getSize() const { return size_; }
+    size_t getCapacity() const { return capacity_; }
 
     double getAllArea() const {
-        double sum = 0.0;
-        for (const auto& sp : data_) {
-            if (sp) sum += static_cast<double>(*sp);
-        }
-        return sum;
+        double total = 0.0;
+        for (size_t i = 0; i < size_; ++i)
+            if (figures_[i])
+                total += static_cast<double>(*figures_[i]);
+        return total;
     }
 
     void printFigures() const {
-        for (size_t i = 0; i < data_.size(); ++i) {
-            std::cout << "Figure " << i << ": ";
-            if (data_[i]) {
-                data_[i]->print(std::cout);
-                auto center = data_[i]->getCenter();
-                std::cout << " | Center: " << center << " | Area: " << static_cast<double>(*data_[i]);
+        for (size_t i = 0; i < size_; ++i) {
+            cout << "Фигура " << i << ": ";
+            if (figures_[i]) {
+                figures_[i]->print(cout);
+                auto center = figures_[i]->getCenter();
+                cout << " | Центр: " << center
+                          << " | Площадь: " << static_cast<double>(*figures_[i]);
             } else {
-                std::cout << "(null)";
+                cout << "(пусто)";
             }
-            std::cout << "\n";
+            cout << '\n';
         }
     }
 
-    std::shared_ptr<Figure<T>> operator[](size_t idx) const {
-        return getFigure(idx);
+    shared_ptr<Figure<T>> operator[](size_t index) const {
+        return getFigure(index);
     }
 };
