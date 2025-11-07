@@ -1,0 +1,5 @@
+/Users/artems/Desktop/c++_labs/testing/lab4/build/CMakeFiles/lab4.dir
+/Users/artems/Desktop/c++_labs/testing/lab4/build/CMakeFiles/tests.dir
+/Users/artems/Desktop/c++_labs/testing/lab4/build/CMakeFiles/test.dir
+/Users/artems/Desktop/c++_labs/testing/lab4/build/CMakeFiles/edit_cache.dir
+/Users/artems/Desktop/c++_labs/testing/lab4/build/CMakeFiles/rebuild_cache.dir
